@@ -58,6 +58,9 @@ Here's every piece of technology used and why:
 
 ```
 dental-lead-finder/
+|-- .github/
+|   |-- workflows/
+|       |-- deploy.yml             # Auto-deploys to Trigger.dev on push to main
 |-- src/
 |   |-- trigger/
 |       |-- dental-leads/
@@ -182,15 +185,21 @@ Check your inbox. You should receive a leads report within 15 seconds.
 
 ### Step 5: Deploy to Production
 
-First, add all three environment variables to your Trigger.dev dashboard:
+**1. Add env vars to Trigger.dev dashboard:**
 - Go to **cloud.trigger.dev** > your project > **Environment Variables**
-- Add `PERPLEXITY_API_KEY`, `RESEND_API_KEY` to **Production**
+- Add `PERPLEXITY_API_KEY` and `RESEND_API_KEY` to **Production**
 
-Then deploy:
+**2. Add deploy token to GitHub:**
+- Go to **cloud.trigger.dev/account/tokens** and create a Personal Access Token (starts with `tr_pat_`)
+- Go to your GitHub repo > **Settings** > **Secrets and variables** > **Actions**
+- Add a secret named `TRIGGER_PAT` with the token value
 
+**3. Push to deploy:**
 ```bash
-npx trigger.dev@latest deploy
+git push origin main
 ```
+
+GitHub Actions automatically deploys to Trigger.dev on every push to `main`. Check the **Actions** tab for deploy status.
 
 Done. It will now run automatically every Monday at 9am IST.
 
