@@ -123,13 +123,13 @@ AI models sometimes wrap JSON in markdown code blocks or return truncated respon
 await fetch("https://api.resend.com/emails", {
   body: JSON.stringify({
     from: "Dental Lead Finder <onboarding@resend.dev>",
-    to: ["your@email.com"],
+    to: [emailTo], // Read from LEAD_EMAIL_RECIPIENT env var
     subject: `25 Dental Leads — Mumbai, Delhi, Pune`,
     html: emailHtml,
   }),
 });
 ```
-One API call. The HTML email template is built inline with card-based layouts, clickable phone links, and color-coded sections.
+One API call. The recipient is configured via the `LEAD_EMAIL_RECIPIENT` environment variable — no code changes needed to update it. The HTML email template is built inline with card-based layouts, clickable phone links, and color-coded sections.
 
 ---
 
@@ -163,14 +163,9 @@ PERPLEXITY_API_KEY=pplx-your_key_here
 
 # Resend — get from: resend.com -> API Keys
 RESEND_API_KEY=re_your_key_here
-```
 
-### Step 3: Update the Email Recipient
-
-In `src/trigger/dental-leads/find-leads.ts`, change the email address on line 110:
-
-```typescript
-to: ["your-email@example.com"],  // <-- put your email here
+# Email Recipient — where lead reports will be sent
+LEAD_EMAIL_RECIPIENT=your-email@example.com
 ```
 
 ### Step 4: Test Locally
@@ -187,7 +182,7 @@ Check your inbox. You should receive a leads report within 15 seconds.
 
 **1. Add env vars to Trigger.dev dashboard:**
 - Go to **cloud.trigger.dev** > your project > **Environment Variables**
-- Add `PERPLEXITY_API_KEY` and `RESEND_API_KEY` to **Production**
+- Add `PERPLEXITY_API_KEY`, `RESEND_API_KEY`, and `LEAD_EMAIL_RECIPIENT` to **Production**
 
 **2. Add deploy token to GitHub:**
 - Go to **cloud.trigger.dev/account/tokens** and create a Personal Access Token (starts with `tr_pat_`)
@@ -263,6 +258,7 @@ Running this automation costs almost nothing:
 |---|---|
 | "PERPLEXITY_API_KEY is not set" | Add the key to both `.env` (local) AND Trigger.dev dashboard (production) |
 | "RESEND_API_KEY is not set" | Same — add to both places |
+| "LEAD_EMAIL_RECIPIENT is not set" | Add your email address to both `.env` and Trigger.dev dashboard |
 | Email not arriving | Check spam folder. Resend's free tier sends from `onboarding@resend.dev` which some providers flag |
 | "Failed to parse leads JSON" | Perplexity occasionally returns non-JSON. The automation handles this gracefully and sends raw results instead |
 | 0 leads found | Try running again — web search results vary. If persistent, check that your Perplexity API key is valid |
