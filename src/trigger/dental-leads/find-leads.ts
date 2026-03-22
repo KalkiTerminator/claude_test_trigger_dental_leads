@@ -1,5 +1,14 @@
 import { schedules } from "@trigger.dev/sdk/v3";
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 const INDIAN_CITIES = [
   "Mumbai", "Delhi", "Bangalore", "Hyderabad", "Chennai",
   "Kolkata", "Pune", "Ahmedabad", "Jaipur", "Lucknow",
@@ -17,6 +26,9 @@ export const findDentalLeads = schedules.task({
 
     const resendKey = process.env.RESEND_API_KEY;
     if (!resendKey) throw new Error("RESEND_API_KEY is not set");
+
+    const emailTo = process.env.LEAD_EMAIL_RECIPIENT;
+    if (!emailTo) throw new Error("LEAD_EMAIL_RECIPIENT is not set");
 
     // Pick 3 random cities each week for variety
     const shuffled = [...INDIAN_CITIES].sort(() => Math.random() - 0.5);
@@ -107,7 +119,7 @@ export const findDentalLeads = schedules.task({
       },
       body: JSON.stringify({
         from: "Dental Lead Finder <onboarding@resend.dev>",
-        to: ["archangelsarva001@gmail.com"],
+        to: [emailTo],
         subject: `🦷 ${leads.length} Dental Leads — ${cities.join(", ")} (${new Date().toLocaleDateString("en-IN")})`,
         html: emailHtml,
       }),
@@ -135,9 +147,9 @@ function buildLeadCard(lead: { name: string; city: string; address: string; phon
   const cardBorder = isHot ? "#fecaca" : "#bbf7d0";
   const cardBg = isHot ? "#fef2f2" : "#f0fdf4";
 
-  const phoneLink = lead.phone ? `<a href="tel:${lead.phone.replace(/\s/g, "")}" style="color: #2563eb; text-decoration: none;">${lead.phone}</a>` : "—";
-  const emailLink = lead.email ? `<a href="mailto:${lead.email}" style="color: #2563eb; text-decoration: none;">${lead.email}</a>` : "";
-  const websiteLink = lead.website ? `<a href="${lead.website}" style="color: #2563eb; text-decoration: none; word-break: break-all;">${lead.website}</a>` : "";
+  const phoneLink = lead.phone ? `<a href="tel:${escapeHtml(lead.phone.replace(/\s/g, ""))}" style="color: #2563eb; text-decoration: none;">${escapeHtml(lead.phone)}</a>` : "—";
+  const emailLink = lead.email ? `<a href="mailto:${escapeHtml(lead.email)}" style="color: #2563eb; text-decoration: none;">${escapeHtml(lead.email)}</a>` : "";
+  const websiteLink = lead.website ? `<a href="${escapeHtml(lead.website)}" style="color: #2563eb; text-decoration: none; word-break: break-all;">${escapeHtml(lead.website)}</a>` : "";
 
   return `
     <div style="background: ${cardBg}; border: 1px solid ${cardBorder}; border-radius: 12px; padding: 20px; margin-bottom: 12px;">
@@ -145,7 +157,7 @@ function buildLeadCard(lead: { name: string; city: string; address: string; phon
         <tr>
           <td>
             <span style="display: inline-block; background: #1e293b; color: white; width: 28px; height: 28px; border-radius: 50%; text-align: center; line-height: 28px; font-size: 13px; font-weight: bold; margin-right: 10px; vertical-align: middle;">${index}</span>
-            <span style="font-size: 18px; font-weight: 700; color: #0f172a; vertical-align: middle;">${lead.name}</span>
+            <span style="font-size: 18px; font-weight: 700; color: #0f172a; vertical-align: middle;">${escapeHtml(lead.name)}</span>
           </td>
           <td style="text-align: right;">
             <span style="display: inline-block; background: ${badgeColor}; color: white; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; letter-spacing: 0.5px;">${badgeText}</span>
@@ -156,7 +168,7 @@ function buildLeadCard(lead: { name: string; city: string; address: string; phon
         <table cellpadding="0" cellspacing="0" border="0" style="font-size: 14px; color: #334155;">
           <tr>
             <td style="padding: 3px 0; width: 24px; vertical-align: top;">&#128205;</td>
-            <td style="padding: 3px 0; padding-left: 6px;">${lead.city} &mdash; ${lead.address}</td>
+            <td style="padding: 3px 0; padding-left: 6px;">${escapeHtml(lead.city)} &mdash; ${escapeHtml(lead.address)}</td>
           </tr>
           <tr>
             <td style="padding: 3px 0; width: 24px; vertical-align: top;">&#128222;</td>
@@ -197,7 +209,7 @@ function buildEmailHtml(
           <h1 style="color: #0f172a; font-size: 22px; margin: 0 0 8px;">Dental Leads Report</h1>
           <p style="color: #64748b; margin: 0 0 20px;">${date} &mdash; ${cities.join(", ")}</p>
           <p style="color: #334155;">Could not parse structured leads. Raw results:</p>
-          <pre style="background: #f1f5f9; padding: 16px; border-radius: 8px; white-space: pre-wrap; font-size: 13px; color: #334155; overflow-x: auto;">${rawContent}</pre>
+          <pre style="background: #f1f5f9; padding: 16px; border-radius: 8px; white-space: pre-wrap; font-size: 13px; color: #334155; overflow-x: auto;">${escapeHtml(rawContent)}</pre>
         </div>
       </div>`;
   }
@@ -211,7 +223,7 @@ function buildEmailHtml(
   const citationsList = citations.length > 0
     ? `<div style="margin-top: 24px; padding: 16px; background: #f1f5f9; border-radius: 10px;">
         <p style="font-size: 12px; font-weight: 600; color: #64748b; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.5px;">Sources</p>
-        ${citations.map((c) => `<a href="${c}" style="display: block; font-size: 12px; color: #2563eb; text-decoration: none; margin-bottom: 4px; word-break: break-all;">${c}</a>`).join("")}
+        ${citations.map((c) => `<a href="${escapeHtml(c)}" style="display: block; font-size: 12px; color: #2563eb; text-decoration: none; margin-bottom: 4px; word-break: break-all;">${escapeHtml(c)}</a>`).join("")}
        </div>`
     : "";
 
